@@ -131,7 +131,7 @@
         mv $repertoire_temporaire/backup.sql.gz$extension_chiffrement $chemin_montage$chemin_backup/backup_mysql_$suffixe.sql.gz$extension_chiffrement
         if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de déplacement]"; erreur Erreur lors du déplacement du dump des bases de données; break; fi
         
-        md5sum $chemin_montage$chemin_backup/backup_mysql_$suffixe.sql.gz$extension_chiffrement >> $chemin_montage$chemin_backup/$suffixe.md5
+        md5sum $chemin_montage$chemin_backup/backup_mysql_$suffixe.sql.gz$extension_chiffrement > $chemin_montage$chemin_backup/backup_mysql_$suffixe.md5
         if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de génération de la somme de contrôle]"; erreur Erreur lors de la génération de la somme de contrôle du dump des bases de données; break; fi
         
         mysql_ok=1
@@ -170,7 +170,7 @@ then
         mv $repertoire_temporaire/backup.txt.gz$extension_chiffrement $chemin_montage$chemin_backup/backup_liste_programmes_$suffixe.txt.gz$extension_chiffrement
         if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de déplacement]"; erreur Erreur lors du déplacement de la liste des applications; break; fi
         
-        md5sum $chemin_montage$chemin_backup/backup_liste_programmes_$suffixe.txt.gz$extension_chiffrement >> $chemin_montage$chemin_backup/$suffixe.md5
+        md5sum $chemin_montage$chemin_backup/backup_liste_programmes_$suffixe.txt.gz$extension_chiffrement > $chemin_montage$chemin_backup/backup_liste_programmes_$suffixe.md5
         if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de génération de la somme de contrôle]"; erreur Erreur lors de la génération de la somme de contrôle de la liste des applications; break; fi
         
         dpkg_ok=1
@@ -210,7 +210,7 @@ then
         mv $repertoire_temporaire/backup.tar.gz$extension_chiffrement $chemin_montage$chemin_backup/backup_fichiers_configuration_$suffixe.tar.gz$extension_chiffrement
         if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de déplacement]"; erreur Erreur lors du déplacement des fichiers de configuration; break; fi
         
-        md5sum $chemin_montage$chemin_backup/backup_fichiers_configuration_$suffixe.tar.gz$extension_chiffrement >> $chemin_montage$chemin_backup/$suffixe.md5
+        md5sum $chemin_montage$chemin_backup/backup_fichiers_configuration_$suffixe.tar.gz$extension_chiffrement > $chemin_montage$chemin_backup/backup_fichiers_configuration_$suffixe.md5
         if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de génération de la somme de contrôle]"; erreur Erreur lors de la génération de la somme de contrôle des fichiers de configuration; break; fi
         
         conf_ok=1
@@ -247,7 +247,7 @@ fi
         mv $repertoire_temporaire/backup.tar.gz$extension_chiffrement $chemin_montage$chemin_backup/backup_fichiers_log_$suffixe.tar.gz$extension_chiffrement
         if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de déplacement]"; erreur Erreur lors du déplacement des fichiers de log; break; fi
         
-        md5sum $chemin_montage$chemin_backup/backup_fichiers_log_$suffixe.tar.gz$extension_chiffrement >> $chemin_montage$chemin_backup/$suffixe.md5
+        md5sum $chemin_montage$chemin_backup/backup_fichiers_log_$suffixe.tar.gz$extension_chiffrement > $chemin_montage$chemin_backup/backup_fichiers_log_$suffixe.md5
         if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de génération de la somme de contrôle]"; erreur Erreur lors de la génération de la somme de contrôle des fichiers de log; break; fi
         
         log_ok=1
@@ -283,7 +283,7 @@ then
         mv $repertoire_temporaire/backup.tar.gz$extension_chiffrement $chemin_montage$chemin_backup/backup_repertoires_personnels_$suffixe.tar.gz$extension_chiffrement
         if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de déplacement]"; erreur Erreur lors du déplacement des dossiers personnels; break; fi
         
-        md5sum $chemin_montage$chemin_backup/backup_repertoires_personnels_$suffixe.tar.gz$extension_chiffrement >> $chemin_montage$chemin_backup/$suffixe.md5
+        md5sum $chemin_montage$chemin_backup/backup_repertoires_personnels_$suffixe.tar.gz$extension_chiffrement > $chemin_montage$chemin_backup/backup_repertoires_personnels_$suffixe.md5
         if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de génération de la somme de contrôle]"; erreur Erreur lors de la génération de la somme de contrôle des dossiers personnels; break; fi
         
         perso_ok=1
@@ -335,7 +335,7 @@ fi
         mv $repertoire_temporaire/backup.tar.gz$extension_chiffrement $chemin_montage$chemin_backup/backup_serveur_web_$suffixe.$type.tar.gz$extension_chiffrement
         if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de déplacement]"; erreur Erreur lors du déplacement du serveur web; break; fi
         
-        md5sum $chemin_montage$chemin_backup/backup_serveur_web_$suffixe.$type.tar.gz$extension_chiffrement >> $chemin_montage$chemin_backup/$suffixe.md5
+        md5sum $chemin_montage$chemin_backup/backup_serveur_web_$suffixe.$type.tar.gz$extension_chiffrement > $chemin_montage$chemin_backup/backup_serveur_web_$suffixe.md5
         if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de génération de la somme de contrôle]"; erreur Erreur lors de la génération de la somme de contrôle du serveur web; break; fi
         
         web_ok=1
