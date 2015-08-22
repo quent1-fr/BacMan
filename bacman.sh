@@ -46,6 +46,7 @@
     
     # Répertoires
     repertoire_temporaire="./temp/" # Faites attention à vos tmpfs, ce dossier sera très vite rempli!
+    repertoire_temporaire_hubiCfuse="/tmp/" # Dossier temporaire de Hubicfuse, défini dans $HOME/.hubiCfuse (voir temp_dir), ou par défaut /tmp
     repertoire_listes="./listes/" # Ce répertoire contiendra les listes nécéssaire aux backups incrémentiels
 
 ###########################################
@@ -449,14 +450,25 @@ fi
     cd /
     
 #############################
-# Nettoyage du compte hubic #
+# Nettoyage du compte hubiC #
 #############################
 
     echo -ne "\e[34mNettoyage des dossiers temporaires du compte hubiC...\t\t\t"
     
-    find $chemin_montage$chemin_backup/ -name "*_segments" -type d -delete # On supprime les dossiers « truc_segments », créés par hubicfuse pour les fichiers > 1Go
+    find $chemin_montage$chemin_backup/ -name "*_segments" -type d -delete # On supprime les dossiers « truc_segments », créés par hubiCfuse pour les fichiers > 1Go
     
     if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de nettoyage]"; erreur Impossible de supprimer les dossiers segments;
+    else echo -e "\e[32m[OK]" fi
+        
+################################################
+# Nettoyage du dossier temporaire de hubiCfuse #
+################################################
+
+    echo -ne "\e[34mNettoyage du dossier temporaire de hubiCfuse...\t\t\t"
+    
+    find $repertoire_temporaire_hubiCfuse/ -name ".cloudfuse*" -type f -delete # On supprime les fichiers « .cloudfuse* », créés par hubiCfuse pour les fichiers uploadés
+    
+    if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de nettoyage]"; erreur Impossible de supprimer les fichiers temporaires cloudfuse;
     else echo -e "\e[32m[OK]" fi
 
 #############################
