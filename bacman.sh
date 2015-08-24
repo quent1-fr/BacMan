@@ -81,15 +81,22 @@
         extension_chiffrement=""
     fi
     
-####################################################################################################
-# Vérification du jour de la semaine pour les sauvegardes devant s'effectuer deux fois par semaine #
-####################################################################################################
+###########################################################################################################
+# Vérification du jour de la semaine pour les sauvegardes devant s'effectuer une ou deux fois par semaine #
+###########################################################################################################
 
-    if [ "$(date +%u)" = 2 -o "$(date +%u)" = 4 ]
+    if [ "$(date +%u)" = 1 -o "$(date +%u)" = 4 ]
     then
         lundi_ou_jeudi=1
     else
         lundi_ou_jeudi=0
+    fi
+    
+    if [ "$(date +%u)" = 1 ]
+    then
+        est_lundi=1
+    else
+        est_lundi=0
     fi
 
 ###########################
@@ -304,7 +311,7 @@ fi
 # Opération réalisée tous les jours, avec une sauvegarde complète le lundi #
 ############################################################################
 
-    if [ $lundi = 1 -o ! -f $repertoire_listes/incrementiel_web.tgb ]
+    if [ $est_lundi = 1 -o ! -f $repertoire_listes/incrementiel_web.tgb ]
     then
         
         echo -ne "\e[34mSauvegarde complète du serveur web...\t\t\t\t"
