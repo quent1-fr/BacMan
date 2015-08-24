@@ -108,7 +108,7 @@
     mkdir $chemin_montage
     if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de création du dossier]"; erreur Impossible de créer le dossier pour monter le compte hubiC; exit 1; fi
     
-    hubicfuse $chemin_montage -o noauto_cache,sync_read
+    hubicfuse $chemin_montage -o noauto_cache,sync_read,segment_above=25000000000
     if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de montage]"; rm -r $chemin_montage; erreur Impossible de monter le compte hubiC; exit 1; fi
     
     echo -e "\e[32m[OK]"
