@@ -1,7 +1,6 @@
 # BacMan
 Bac(kup)Man(ager) est un script bash permettant de réaliser les sauvegardes compressées et chiffrées vers la plateforme hubiC d'OVH.
 Fourni « as-is », ce script a pour but de servir de base plus ou moins solide à vos propres scripts de sauvegarde. Libre à vous d'ajouter ou de supprimer des zones à sauvegarder.
-
 ## Pré-requis
 
 Pour fonctionner, BacMan a besoin des programmes suivant :
@@ -14,6 +13,8 @@ Pour fonctionner, BacMan a besoin des programmes suivant :
  * gzip
  * dpkg (pour la liste des applications)
  * mysqldump (pour la sauvegarde des bases de données MySQL)
+ * wget
+ * ftp (pour la sauvegarde d'une base de données MySQL distante)
  
 ## Installation
 
@@ -54,3 +55,7 @@ Par défaut, bacman sauvegarde les éléments suivants :
     
 Pour ajouter d'autres dossiers à la sauvegarde, il vous suffit de vous inspirer des éléments présents dans le code source.
     Pensez également à configurer la rotation des sauvegardes (juste avant le démontage du compte hubiC).
+    
+##Logiciels tiers utilisés
+
+Pour effectuer la sauvegarde, BacMan s'appuie sur un script basé sur la librairie PHP [Shuttle Export](https://github.com/2createStudio/shuttle-export), publiée sous licence GNU GPL v2.

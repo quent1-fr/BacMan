@@ -49,6 +49,20 @@
     repertoire_temporaire_hubiCfuse="/tmp/" # Dossier temporaire de Hubicfuse, défini dans $HOME/.hubiCfuse (voir temp_dir), ou par défaut /tmp
     repertoire_listes="./listes/" # Ce répertoire contiendra les listes nécéssaire aux backups incrémentiels
 
+    # Paramètres pour la sauvegarde d'un FTP distant, ainsi que pour l'upload du fichier « dump.php »
+    ftp_hote="ftp.example.com" # Adresse du serveur FTP
+    ftp_login="monlogin" # Login du serveur FTP
+    ftp_pwd="monmotdepasse" # Mot de passe du serveur FTP
+    ftp_rep="/www/dump/" # Dossier où sera uploadé « dump.php »
+    
+    # Paramètres pour la sauvegarde d'un serveur MySQL distant (via dump.php)
+    phpsqldump_hote="localhost" # Adresse du serveur MySQL, par rapport au serveur web, donc souvent localhost!        
+    phpsqldump_login="monlogin" # Login du serveur MySQL
+    phpsqldump_pwd="monmotdepasse" # Mot de passe du serveur SQL
+    phpsqldump_db="mabase" # Base de données à sauvegarder
+    phpsqldump_url="http://example.com/~monsupersite/dump/" # Adresse à laquelle le fichier de dump sera récupérable (veuillez préciser un dossier)
+
+
 ###########################################
 # Fonctions et variables utiles au backup #
 ###########################################
@@ -64,6 +78,11 @@
     lundi_avant=$(date -d'monday-14 days' +%d-%m-%Y) # (JJ-MM-AAAA)
     lundi_avant_avant=$(date -d'monday-21 days' +%d-%m-%Y) # (JJ-MM-AAAA)
     
+    # Variables permettant de sécuriser le backup SQL distant
+    nom_dump_php=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1) # Merci à https://gist.github.com/earthgecko/3089509 pour la commande
+    nom_dump_sql=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1)
+    cle_secrete=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1)
+    
     # Permet de vérifier l'absence d'erreur pour chaque backup
     mysql_ok=0
     dpkg_ok=0
@@ -71,6 +90,8 @@
     perso_ok=0
     web_ok=0
     log_ok=0
+    ftp_ok=0
+    sqld_ok=0
 
 ##############################################
 # Désactivation du chiffrement si nécéssaire #
@@ -353,6 +374,127 @@ fi
     done
     
     rm $repertoire_temporaire/*
+
+###################################
+#   Sauvegarde d'un FTP distant   #
+# Opération réalisée chaque lundi #
+###################################
+
+if [ $est_lundi = 1 ]
+then
+
+    for controle_erreur in 0
+    do
+    
+        echo -ne "\e[34mSauvegarde du FTP distant...\t\t\t\t"
+        
+        wget -rc --quiet -P $repertoire_temporaire ftp://$ftp_login:$ftp_pwd@$ftp_hote/ > /dev/null
+        if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de téléchargement]"; erreur Erreur lors du téléchargement d\'une copie du FTP distant; break; fi
+        
+        tar -czf $repertoire_temporaire/backup.tar.gz $repertoire_temporaire/$ftp_hote/.
+        if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de compression]"; erreur Erreur lors de la compression de la sauvegarde du FTP; break; fi
+        
+        if [ $activer_chiffrement -eq 1 ]
+        then
+            openssl aes-256-cbc -salt -in $repertoire_temporaire/backup.tar.gz -out $repertoire_temporaire/backup.tar.gz$extension_chiffrement -k $cle_chiffrement
+            if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de chiffrement]"; erreur Erreur lors du chiffrement de la sauvegarde du FTP; break; fi
+        fi
+        
+        mv $repertoire_temporaire/backup.tar.gz$extension_chiffrement $chemin_montage$chemin_backup/backup_$ftp_hote\_$suffixe.tar.gz$extension_chiffrement
+        if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de déplacement]"; erreur Erreur lors du déplacement de la sauvegarde du FTP; break; fi
+        
+        md5sum $chemin_montage$chemin_backup/backup_$ftp_hote\_$suffixe.tar.gz$extension_chiffrement > $chemin_montage$chemin_backup/backup_$ftp_hote\_$suffixe.tar.gz$extension_chiffrement.md5
+        if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de génération de la somme de contrôle]"; erreur Erreur lors de la génération de la somme de contrôle de la sauvegarde du FTP; break; fi
+        
+        ftp_ok=1
+        
+        echo -e "\e[32m[OK]"
+        
+    done
+    
+    rm -r $repertoire_temporaire/*
+    
+else
+    echo -e "\e[34mSauvegarde du FTP distant...\t\t\t\e[33m[Ignoré]"
+fi
+
+#########################################
+# Sauvegarde d'un serveur MySQL distant #
+#    Opération réalisée chaque lundi    #
+#########################################
+
+if [ $est_lundi = 1 ]
+then
+
+    for controle_erreur in 0
+    do
+    
+        echo -ne "\e[34mSauvegarde du serveur MySQL distant...\t\t\t\t"
+        
+        # Copie du script de dump
+        cp dump.php $repertoire_temporaire/$nom_dump_php.php
+        if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de copie]"; erreur Erreur lors de la copie du script de dump du SQL distant; break; fi
+    
+        # Écriture des paramètres (identifiants et clés) dans la copie du script de dump
+        sed -i s/"{\[DUMP_CLE\]}"/"$cle_secrete"/g $repertoire_temporaire/$nom_dump_php.php
+        sed -i s/"{\[DUMP_HOTE\]}"/"$phpsqldump_hote"/g $repertoire_temporaire/$nom_dump_php.php
+        sed -i s/"{\[DUMP_LOGIN\]}"/"$phpsqldump_login"/g $repertoire_temporaire/$nom_dump_php.php
+        sed -i s/"{\[DUMP_PWD\]}"/"$phpsqldump_pwd"/g $repertoire_temporaire/$nom_dump_php.php
+        sed -i s/"{\[DUMP_DB\]}"/"$phpsqldump_db"/g $repertoire_temporaire/$nom_dump_php.php
+        sed -i s/"{\[DUMP_FICHIER\]}"/"$nom_dump_sql"/g $repertoire_temporaire/$nom_dump_php.php
+        
+        # Envoi du script de dump sur le serveur FTP        
+ftp -n $ftp_hote <<FIN_COMMANDES_ENVOI
+    user "$ftp_login" "$ftp_pwd"
+    binary
+    cd "$ftp_rep"
+    put "$repertoire_temporaire/$nom_dump_php.php"
+    bye
+FIN_COMMANDES_ENVOI
+        if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur d'envoi]"; erreur Erreur lors de l\'envoi des fichiers nécéssaires à la sauvegarde du SQL distant; break; fi
+
+        # Génération du fichier de dump 
+        wget --quiet --spider --no-check-certificate "$phpsqldump_url$nom_dump_php.php?cle=$cle_secrete" > /dev/null
+        if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de génération]"; erreur Erreur lors de la génération du SQL distant; break; fi
+    
+        # Téléchargement du fichier de dump
+        wget --quiet --no-check-certificate --output-document "$repertoire_temporaire/backup_sql_distant.sql.gz" -c "$phpsqldump_url$nom_dump_sql.sql.gz" > /dev/null
+        if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de téléchargement]"; erreur Erreur lors du téléchargement du fichier de dump du SQL distant; break; fi
+        
+        # Suppression des deux fichiers du serveur FTP    
+ftp -n $ftp_hote <<FIN_COMMANDES_SUPPRESSION        
+    user "$ftp_login" "$ftp_pwd"
+    binary
+    cd "$ftp_rep"
+    delete "$nom_dump_php.php"
+    delete "$nom_dump_sql.sql.gz"
+    bye
+FIN_COMMANDES_SUPPRESSION
+        if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de suppression]"; erreur Erreur lors de la suppression des fichiers nécéssaires à la sauvegarde du SQL distant; break; fi
+        
+        if [ $activer_chiffrement -eq 1 ]
+        then
+            openssl aes-256-cbc -salt -in $repertoire_temporaire/backup_sql_distant.sql.gz -out $repertoire_temporaire/backup_sql_distant.sql.gz$extension_chiffrement -k $cle_chiffrement
+            if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de chiffrement]"; erreur Erreur lors du chiffrement de la sauvegarde du SQL distant; break; fi
+        fi
+        
+        mv $repertoire_temporaire/backup_sql_distant.sql.gz$extension_chiffrement $chemin_montage$chemin_backup/backup_sql_distant_$suffixe.sql.gz$extension_chiffrement
+        if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de déplacement]"; erreur Erreur lors du déplacement de la sauvegarde du SQL distant; break; fi
+        
+        md5sum $chemin_montage$chemin_backup/backup_sql_distant_$suffixe.sql.gz$extension_chiffrement > $chemin_montage$chemin_backup/backup_sql_distant_$suffixe.sql.gz$extension_chiffrement.md5
+        if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de génération de la somme de contrôle]"; erreur Erreur lors de la génération de la somme de contrôle de la sauvegarde du SQL distant; break; fi
+        
+        sqld_ok=1
+        
+        echo -e "\e[32m[OK]"
+        
+    done
+    
+    rm $repertoire_temporaire/*
+    
+else
+    echo -e "\e[34mSauvegarde du serveur MySQL distant...\t\t\e[33m[Ignoré]"
+fi
     
 #######################################
 # Rotation des fichiers de sauvegarde #
@@ -431,6 +573,38 @@ fi
         if [ $(find . ! -newermt $lundi ! -type d  ! -name '*$lundi_avant*' ! -name '*$lundi_avant_avant*' -name 'backup_serveur_web_*' | wc -l) -gt 0 ]; then
             find . ! -newermt $lundi ! -type d  ! -name '*$lundi_avant*' ! -name '*$lundi_avant_avant*' -name 'backup_serveur_web_*' -delete
         
+            if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur]"
+            else echo -e "\e[32m[OK]"; fi
+        else
+            echo -e "\e[33m[Ignoré]"
+        fi
+    fi
+    
+    if [ $ftp_ok -eq 1 ]
+    then
+        echo -ne "\e[34mRotation des sauvegardes du FTP distant...\t\t"
+        
+        cd $chemin_montage$chemin_backup/
+        
+        if [ $(ls -1tr backup_$ftp_hote\_* | head -n -5 | wc -l) -gt 0 ]; then
+            ls -1tr backup_$ftp_hote\_* | head -n -5 |  xargs -d '\n' rm
+            
+            if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur]"
+            else echo -e "\e[32m[OK]"; fi
+        else
+            echo -e "\e[33m[Ignoré]"
+        fi
+    fi
+    
+    if [ $sqld_ok -eq 1 ]
+    then
+        echo -ne "\e[34mRotation des sauvegardes du serveur MySQL distant...\t\t"
+        
+        cd $chemin_montage$chemin_backup/
+        
+        if [ $(ls -1tr backup_sql_distant_* | head -n -5 | wc -l) -gt 0 ]; then
+            ls -1tr backup_sql_distant_* | head -n -5 |  xargs -d '\n' rm
+            
             if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur]"
             else echo -e "\e[32m[OK]"; fi
         else
