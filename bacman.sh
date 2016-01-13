@@ -448,7 +448,7 @@ ftp -n $ftp_hote <<FIN_COMMANDES_ENVOI
     user "$ftp_login" "$ftp_pwd"
     binary
     cd "$ftp_rep"
-    put "$repertoire_temporaire/$nom_dump_php.php"
+    put "$repertoire_temporaire/$nom_dump_php.php" "$nom_dump_php.php"
     bye
 FIN_COMMANDES_ENVOI
         if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur d'envoi]"; erreur Erreur lors de l\'envoi des fichiers nécéssaires à la sauvegarde du SQL distant; break; fi
@@ -639,7 +639,7 @@ fi
     find $chemin_montage$chemin_backup/ -name "*_segments" -type d -delete # On supprime les dossiers « truc_segments », créés par hubiCfuse pour les fichiers > 1Go
     
     if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de nettoyage]"; erreur Impossible de supprimer les dossiers segments;
-    else echo -e "\e[32m[OK]" fi
+    else echo -e "\e[32m[OK]"; fi
         
 ################################################
 # Nettoyage du dossier temporaire de hubiCfuse #
@@ -650,7 +650,7 @@ fi
     find $repertoire_temporaire_hubiCfuse/ -name ".cloudfuse*" -type f -delete # On supprime les fichiers « .cloudfuse* », créés par hubiCfuse pour les fichiers uploadés
     
     if [ "$?" -ne 0 ]; then echo -e "\e[31m[Erreur de nettoyage]"; erreur Impossible de supprimer les fichiers temporaires cloudfuse;
-    else echo -e "\e[32m[OK]" fi
+    else echo -e "\e[32m[OK]"; fi
 
 #############################
 # Démontage du compte hubiC #
